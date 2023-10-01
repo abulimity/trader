@@ -1,30 +1,34 @@
 import backtrader as bt
 
-class PowerSignal(bt.SignalStrategy):
+class PowerSignal(bt.Indicator):
+    lines = (
+            'powerSign',
+            'macd',
+             # 'isUpOfMacd',
+             # 'isUpOfEMA',
+             )
     params = (
-        ('ema_period', 20),
-        ('macd_fast_period', 12),
-        ('macd_slow_period', 26),
-        ('macd_signal_period', 9),
+        ('fastperiod', 12),
+        ('slowperiod', 26),
+        ('signalperiod', 9),
+        # ('macdhist', bt.indicators.MACDHisto),
+        ('emaperiod', 30),
+        # ('emab', bt.indicators.MovAv.EMA)
     )
 
-    lines = ('power_signal',)  # Declare the line object
-
     def __init__(self):
-        self.ema = bt.indicators.ExponentialMovingAverage(
-            self.data, period=self.params.ema_period
-        )
-        self.macd = bt.indicators.MACDHisto(
-            self.data,
-            period_me1=self.params.macd_fast_period,
-            period_me2=self.params.macd_slow_period,
-            period_signal=self.params.macd_signal_period
-        )
+        super(PowerSignal, self).__init__()
+        self.addminperiod(self.p.emaperiod)
 
-    def next(self):
-        if self.ema[0] > self.ema[-1] and self.macd.macdhist[0] > self.macd.macdhist[-1]:
-            self.lines.power_signal[0] = 1
-        elif self.ema[0] < self.ema[-1] and self.macd.macdhist[0] < self.macd.macdhist[-1]:
-            self.lines.power_signal[0] = -1
-        else:
-            self.lines.power_signal[0] = 0
+        self.lines.macd= _macdhist = bt.indicators.MACDHisto(period_me1=self.p.fastperiod,
+                                period_me2=self.p.slowperiod,
+                                period_signal=self.p.signalperiod).histo
+        self.lines.isUpOfMacd = bt.Cmp(_macdhist, _macdhist(-1))
+        # self.lines.isUpOfMacd = IsUpOfMacd(self.data,
+        #                                    period_me1=self.p.fastperiod,
+        #                                    period_me2=self.p.slowperiod,
+        #                                    period_signal=self.p.signalperiod)
+        _ema = bt.indicators.EMA(period=self.p.emaperiod)
+        # self.lines.isUpOfEMA = IsUpOfEMA(self.data, period=self.p.emaperiod)
+        self.lines.isUpOfEMA = bt.Cmp(_ema, _ema(-1))
+        self.lines.powerSign = self.lines.isUpOfMacd + self.lines.isUpOfEMA

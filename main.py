@@ -1,22 +1,18 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-# import base64
-# import datetime  # For datetime objects
-# import os.path  # To manage paths
-# import sys  # To find out the script name (in argv[0])
-# from io import BytesIO
+import base64
+import datetime  # For datetime objects
+import os.path  # To manage paths
+import sys  # To find out the script name (in argv[0])
+from io import BytesIO
 
 import backtrader as bt
 import pandas as pd
 import pymysql
 from sqlalchemy import create_engine
 
-from backtrader_plotly.plotter import BacktraderPlotly
-from backtrader_plotly.scheme import PlotScheme
-import plotly.io
-
-from myStrategies.test_strategy import TestStrategy
+from myStrategies.triplesystem import TripleSystem
 # Bokeh
 # from backtrader_plotting import Bokeh
 # from backtrader_plotting.schemes import Tradimo
@@ -26,7 +22,7 @@ if __name__ == '__main__':
     # Create a cerebro entity
     cerebro = bt.Cerebro()
 
-    cerebro.addstrategy(TestStrategy)
+    cerebro.addstrategy(TripleSystem)
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
@@ -108,7 +104,7 @@ if __name__ == '__main__':
         select trade_date,open,high,low,close,vol
         from daily 
         where ts_code = "300256.SZ" 
-          and trade_date between "20210101" and "20210228"
+          and trade_date between "20210101" and "20221231"
     '''
     df = pd.read_sql_query(query,
                            engine,
@@ -141,27 +137,9 @@ if __name__ == '__main__':
     cerebro.run()
     # b = Bokeh(style='bar', plot_mode='single', scheme=Tradimo())
     # cerebro.plot(b)
-    # define plot scheme with new additional scheme arguments
-    scheme = PlotScheme(decimal_places=5, max_legend_text_width=16)
+    fig = cerebro.plot()
+    # fig[0][0].savefig('./test.png', format="png")
 
-    figs = cerebro.plot(BacktraderPlotly(show=False, scheme=scheme))
-    # figs[0][0].savefig('/home/abulimity/project/webapp/static/test.png')
-    # buffer = BytesIO()
-    # figs[0][0].savefig(buffer)
-    # plot_data = buffer.getvalue()
-    # # 将matplotlib图片转换为HTML
-    # imb = base64.b64encode(plot_data)  # 对plot_data进行编码
-    # ims = imb.decode()
-    # imd = "data:image/png;base64," + ims
+    # fig = cerebro.plot()[0][0]
 
-    # directly manipulate object using methods provided by `plotly`
-    for i, each_run in enumerate(figs):
-        for j, each_strategy_fig in enumerate(each_run):
-            # open plot in browser
-            each_strategy_fig.show()
-
-            # save the html of the plot to a variable
-            html = plotly.io.to_html(each_strategy_fig, full_html=False)
-
-            # write html to disk
-            plotly.io.write_html(each_strategy_fig, f'{i}_{j}.html', full_html=True)
+    # fig.savefig('./test.png', format="png")

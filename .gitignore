@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 # CUSTOM
 python310/
+.idea/
 
 # C extensions
 *.so
