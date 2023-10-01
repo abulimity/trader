@@ -1,13 +1,22 @@
-# coding=utf-8
-import matplotlib
-import matplotlib.pyplot as plt
-# matplotlib.use("Qt5Agg")
+import sshtunnel
+import MySQLdb
+import paramiko
 
-plt.figure(figsize=(20, 10), dpi=100)
-game = ['1-G1', '1-G2', '1-G3', '1-G4', '1-G5', '2-G1', '2-G2', '2-G3', '2-G4', '2-G5', '3-G1', '3-G2', '3-G3',
-        '3-G4', '3-G5', '总决赛-G1', '总决赛-G2', '总决赛-G3', '总决赛-G4', '总决赛-G5', '总决赛-G6']
-scores = [23, 10, 38, 30, 36, 20, 28, 36, 16, 29, 15, 26, 30, 26, 38, 34, 33, 25, 28, 40, 28]
-plt.plot(game, scores)
-# plt.savefig('./test.png')
-plt.show()
-plt.imshow(['10.0'])
+private_key = paramiko.RSAKey.from_private_key('C:/user/abulimity/.ssh/id_rsa')
+
+# 開啟一個通道穿越REMOTE SERVER直到REMOTE PRIVATE SERVER
+# 並且將他和local端的port綁定
+server = sshtunnel.SSHTunnelForwarder(
+        ('8.218.234.114', 22),
+        ssh_username="abulimity",
+        ssh_pkey=private_key,
+        remote_bind_address=('127.0.0.1', 3306)
+    )
+server.start()
+# 使用已和local端綁定的port 去遠端連線MySQL
+conn = MySQLdb.connect(host='127.0.0.1',
+                  port=server.local_bind_port,
+                  user='mysql_user',
+                  passwd='mysql_pw',
+                  db='db_name')
+server.stop()
