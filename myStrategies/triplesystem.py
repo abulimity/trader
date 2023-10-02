@@ -1,6 +1,4 @@
 import backtrader as bt
-from backtrader.indicator import LinePlotterIndicator
-import backtrader.indicators as btind
 from myIndictors.powersignal import PowerSignal
 from myIndictors.avgdown import AvgDown
 from myIndictors.forceindex import ForceIndex
@@ -9,6 +7,9 @@ from myIndictors.forceindex import ForceIndex
 class TripleSystem(bt.Strategy):
     params = {
         'printlog': True,
+        'stoptype':  bt.Order.StopTrail,
+        'trailamount' : 0.0,
+        'trailpercent' : 0.05,
     }
 
     def __init__(self):
@@ -16,9 +17,12 @@ class TripleSystem(bt.Strategy):
         self.order = None
         self.enough_price = -1
 
-        self.power_signal = PowerSignal()
-        self.force_index = ForceIndex()
-        self.enough_price = AvgDown()
+        self.day_power_signal = PowerSignal(self.data)
+        self.day_force_index = ForceIndex(self.data)
+        self.day_avgDown = AvgDown(self.data)
+        self.week_power_signal = PowerSignal(self.data1)
+        self.week_force_index = ForceIndex(self.data1)
+        self.week_three_highest = bt.indicators.Highest(self.data1,period=40)
 
 
     def log(self, txt, dt=None, doprint=False):
@@ -26,13 +30,6 @@ class TripleSystem(bt.Strategy):
         if self.params.printlog or doprint:
             dt = dt or self.datas[0].datetime.date(0)
             print('%s, %s' % (dt.isoformat(), txt))
-
-    def prenext(self):
-        '''
-        在开始执行next()之前，一次性调用n-1次，第n次去调用next
-        :return:
-        '''
-        pass
 
     def next(self):
         '''
@@ -45,45 +42,54 @@ class TripleSystem(bt.Strategy):
             return
 
         if not self.position:
-            pass
+            # self.order = self.buy()
+        # 如果没有持仓
+            if self.week_power_signal[0] == 2 and self.day_force_index[0] < 0:
+                self.log('BUY SIGNNEL,week_power_sign:%.2f, day_force:%.2f' %
+                         (self.week_power_signal[0], self.day_force_index[0]))
+                self.order = self.buy(price=self.day_avgDown[0], exectype=bt.Order.Limit)
+                # self.order = self.buy(price=self.day_avgDown[0], )
+                self.log('BUY SEND,in price:%.2f, enough price:%.2f' %
+                         (self.day_avgDown[0], self.enough_price))
         else:
-            self.order = self.buy()
-        # # 如果没有持仓
-        #     if self.week_power_sign[0] == 2 and self.day_force[0] < 0:
-        #         self.log('BUY SIGNNEL,week_power_sign:%.2f, day_force:%.2f' %
-        #                  (self.week_power_sign[0], self.day_force[0]))
-        #         self.order = self.buy(price=self.avgDown[0], exectype=bt.Order.Limit)
-        #     self.log('BUY SEND,in price:%.2f, enough price:%.2f' %
-        #              (self.avgDown[0], self.enough_price))
-        #
+            # 止盈
+            # 周线 近N次最高值
+            self.enough_price = self.week_three_highest[0]
+            self.order = self.sell(price=self.enough_price, exectype=bt.Order.Limit)
+            self.log('ENOUGH SELL SEND,in price:%.2f, enough price:%.2f' %
+                     (self.day_avgDown[0], self.enough_price))
+        if self.position and self.order is None:
+            self.order = self.sell(exectype=self.p.stoptype,
+                                   trailamount=self.p.trailamount,
+                                   trailpercent=self.p.trailpercent)
+        #     if self.p.trailamount:
+        #         tcheck = self.data.close - self.p.trailamount
+        #     else:
+        #         tcheck = self.data.close * (1.0 - self.p.trailpercent)
+        #     print(','.join(
+        #             map(str, [self.datetime.date(), self.data.close[0],
+        #                       self.order.created.price, tcheck])
+        #         )
+        #     )
+        #     print('-' * 10)
         # else:
-        #     # 止盈
-        #     # 周线 近N次最高值
-        #     self.enough_price = self.week_three_highest[0]
-        #     self.order = self.sell(price=self.enough_price, exectype=bt.Order.Limit)
-        #     self.log('SELL SEND,in price:%.2f, enough price:%.2f' %
-        #              (self.avgDown[0], self.enough_price))
+        #     if self.p.trailamount:
+        #         tcheck = self.data.close - self.p.trailamount
+        #     else:
+        #         tcheck = self.data.close * (1.0 - self.p.trailpercent)
+        #     print(','.join(
+        #         map(str, [self.datetime.date(), self.data.close[0],
+        #                   self.order.created.price, tcheck])
+        #         )
+        #     )
 
+        #
+        #     # 止损
 
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
             return
-            # Buy/Sell order submitted/accepted to/by broker - Nothing to do
-            # if order.isbuy():
-            #     self.log(
-            #         'BUY Submitted, Price: %.2f, Cost: %.2f, Comm %.2f' %
-            #         (order.created.price,
-            #          order.created.value,
-            #          order.created.comm))
-            #
-            #     # self.buyprice = order.executed.price
-            #     # self.buycomm = order.executed.comm
-            # else:  # Sell
-            #     self.log('SELL Submitted, Price: %.2f, Cost: %.2f, Comm %.2f' %
-            #              (order.created.price,
-            #               order.created.value,
-            #               order.created.comm))
 
         # Check if an order has been completed
         # Attention: broker could reject order if not enough cash
