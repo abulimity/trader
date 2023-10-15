@@ -11,13 +11,15 @@ class StrategyLogger(Strategy):
         log_enable_list=[
             "FUND",
             "ORDER",
-            "TRADE"
+            "TRADE",
+            "NEXT"
         ],
         color={
             "CASHVALUE": "cyan",
             "FUND": "cyan",
             "ORDER": "green",
-            "TRADE": "red"
+            "TRADE": "red",
+            "NEXT": "red"
         },
         stdout=True,
         db=False

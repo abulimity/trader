@@ -52,6 +52,7 @@ class TripleSystem(StrategyLogger):
         self.week_bollband = bt.indicators.BollingerBands(self.data1, period=self.p.emaperiod, movav=bt.indicators.EMA)
 
     def next(self):
+        super().next()
         '''
 
         :return:

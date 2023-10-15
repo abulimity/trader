@@ -11,7 +11,7 @@ def run():
     cerebro.addstrategy(TripleSystem)
 
     # add data
-    datas = get_data_from_db(code="300256.SZ",start="20180101", end="20231001", time_frames=["Days", "Weeks"])
+    datas = get_data_from_db(code="300256.SZ", start="20170101", end="20231001", time_frames=["Days", "Weeks"])
     for d in datas:
         cerebro.adddata(d)
 
