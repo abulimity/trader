@@ -73,6 +73,7 @@ class TestStrategy(bt.Strategy):
         self.buyprice = None
         self.buycomm = None
         self.sma = bt.indicators.MovingAverageSimple(self.datas[0], period=self.params.maperiod)
+        bt.indicators.ATR(self.datas[0], plot=True)
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -105,7 +106,7 @@ class TestStrategy(bt.Strategy):
                     (trade.pnl, trade.pnlcomm))
 
     def next(self):
-        logger.info("trade_date:%s,Close:%.2f" % (self.datas[0].datetime.date(0), self.dataclose[0]))
+        # logger.info("trade_date:%s,Close:%.2f" % (self.datas[0].datetime.date(0), self.dataclose[0]))
 
         if self.order:
             return
@@ -120,14 +121,20 @@ class TestStrategy(bt.Strategy):
                 logger.info("trade_date:%s,SELL CREATE:%.2f" % (self.datas[0].datetime.date(0), self.dataclose[0]))
                 self.order = self.sell()
 
+    def stop(self):
+        logger.info('(MA Period %2d) Ending Value %.2f' %
+                 (self.params.maperiod, self.broker.getvalue()), doprint=True)
+
 
 if __name__ == '__main__':
     # logger.remove()
     # logger.add(sys.stdout,format="",level="DEBUG")
     cerebro = bt.Cerebro()
 
-    cerebro.addstrategy(TestStrategy)
-
+    strats = cerebro.optstrategy(
+        TestStrategy,
+        maperiod=range(10,31)
+    )
     data_path = Path("data")
     data_file = data_path.joinpath("00001.csv")
 
@@ -153,9 +160,5 @@ if __name__ == '__main__':
     longbridge_comminfo = LBCommInfo(commission=0.005)
     cerebro.broker.addcommissioninfo(longbridge_comminfo)
 
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-
     cerebro.run()
-    cerebro.plot()
-
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    # cerebro.plot()
