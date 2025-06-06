@@ -4,8 +4,9 @@ from backtesting.lib import crossover
 from loguru import logger
 
 import pandas as pd
+import talib
 
-data_path = Path("data")
+data_path = Path("..\data")
 data_file = data_path.joinpath("00001.csv")
 data_csv_df = pd.read_csv(data_file, encoding='GBK')
 
@@ -13,10 +14,11 @@ data_df = pd.DataFrame(
     data=data_csv_df.loc[:, ['日期', '开盘价', '最高价', '最低价', '收盘价', '成交量(股)']]).rename(
     columns={'开盘价': 'Open', '最高价': 'High', '最低价': 'Low', '收盘价': 'Close', '成交量(股)': 'Volume',
              '日期': 'Date'})
-data_df['Date'] =  pd.to_datetime(data_df['Date'])
+data_df['Date'] = pd.to_datetime(data_df['Date'])
 data_df = data_df.set_index('Date')
 logger.info('data:\n%s' % data_df.tail())
 logger.info('data:\n%s' % data_df.dtypes)
+
 
 def SMA(values, n):
     """
@@ -25,20 +27,31 @@ def SMA(values, n):
     """
     return pd.Series(values).rolling(n).mean()
 
+
+def BOLL(close, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0):
+    upperband, middleband, lowerband = talib.BBANDS(close, timeperiod=timeperiod, nbdevup=nbdevup, nbdevdn=nbdevdn,
+                                                    matype=matype)
+    result = (upperband, middleband, lowerband)
+    return result
+
+
 class TestStrategy(Strategy):
     n1 = 5
     n2 = 15
+
     def init(self):
         self.sma1 = self.I(SMA, self.data.Close, self.n1)
         self.sma2 = self.I(SMA, self.data.Close, self.n2)
+        self.boll_up = self.I(BOLL, self.data.Close,color=("red","green","blue"))
 
     def next(self):
         if crossover(self.sma1, self.sma2):
             self.position.close()
             self.buy()
-        elif crossover(self.sma2,self.sma1):
+        elif crossover(self.sma2, self.sma1):
             self.position.close()
             self.sell()
+
 
 if __name__ == '__main__':
     bt = Backtest(
@@ -49,5 +62,5 @@ if __name__ == '__main__':
     )
     stats = bt.run()
 
-    logger.info('trade log:/n %s'% stats['_trades'])
+    logger.info('trade log:/n %s' % stats['_trades'])
     bt.plot()
