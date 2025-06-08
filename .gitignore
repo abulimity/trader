@@ -1,6 +1,7 @@
 # data file
 *.zip
 hk_qfq_0530
+/data/hk
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
