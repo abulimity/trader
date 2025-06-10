@@ -1,8 +1,8 @@
 # data file
 *.zip
+*.db
 hk_qfq_0530
 /data/hk
-/data/database.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
