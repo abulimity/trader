@@ -6,7 +6,7 @@ import argparse
 
 def import_stock_data(stock_ids):
     # 连接数据库
-    conn = sqlite3.connect('data/database.db')
+    conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
     # 创建表
@@ -35,27 +35,28 @@ def import_stock_data(stock_ids):
 
     # 定义列名映射
     column_mapping = {
-        '公司名称': 'company_name',
-        '日期': 'date',
-        '开盘价': 'open',
-        '最高价': 'high',
-        '最低价': 'low',
-        '收盘价': 'close',
-        '成交量(股)': 'volume',
-        '成交额(元)': 'amount',
-        '换手率(%)': 'turnover_rate',
-        '涨跌额': 'change_amount',
-        '涨跌幅(%)': 'change_percent',
-        '市盈率(PE)': 'pe_ratio',
-        '市销率(PS)': 'ps_ratio',
-        '市现率(PCF)': 'pcf_ratio',
-        '总市值': 'market_cap',
-        '前收盘价': 'prev_close',
-        '涨跌额': 'change'
+        # '':'stock_id',
+        '公司名称':'company_name',
+        '日期':'date',
+        '开盘价':'open',
+        '最高价':'high',
+        '最低价':'low',
+        '收盘价':'close',
+        '成交量(股)':'volume',
+        '成交额(港元)':'amount',
+        '换手率(%)':'turnover_rate',
+        '涨跌额':'change_amount',
+        '涨跌幅(%)':'change_percent',
+        '市盈率(PE)':'pe_ratio',
+        '价销比(PS)':'ps_ratio',
+        '市现率(PCF)':'pcf_ratio',
+        '总市值':'market_cap',
+        '前收盘价':'prev_close',
+        '涨跌幅':'change',
     }
 
     # 获取所有CSV文件
-    csv_dir = Path('data/hk')
+    csv_dir = Path('hk')
     csv_files = list(csv_dir.glob('*.csv'))
 
     # 如果stock_ids包含-1，则导入所有文件
