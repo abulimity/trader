@@ -3,10 +3,11 @@ import pandas as pd
 import os
 from pathlib import Path
 import argparse
+from setting import database_path
 
 def import_stock_data(stock_ids):
     # 连接数据库
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(database_path)
     cursor = conn.cursor()
 
     # 创建表
